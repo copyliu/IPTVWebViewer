@@ -31,10 +31,11 @@ namespace IPTVWebViewer.Controller
         [Route("all")]
         public List<PlayListEntry> GetPlayList()
         {
+        
             var playlist = Path.Combine(_appEnvironment.WebRootPath, "playlist.m3u");
-            var parser=PlaylistsNET.Content.PlaylistParserFactory.GetPlaylistParser(PlaylistType.M3U8);
             using var file = new FileStream(playlist, FileMode.Open);
-            var playlists=(M3uPlaylist)parser.GetFromStream(file);
+            var content = new M3uContent();
+            var playlists =content.GetFromStream(file);
             return playlists.PlaylistEntries.Select((p,i) => new PlayListEntry()
             {
                 name = p.Title + playlists.Comments.Skip(i).FirstOrDefault(),

@@ -1,4 +1,4 @@
-#EXTM3U name="广东IPTV"
+#EXTM3U
 #EXTINF:-1,广东卫视
 rtp://239.77.0.2:5146
 #EXTINF:-1,广东卫视
