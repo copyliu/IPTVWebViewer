@@ -1,0 +1,120 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home page";
+}
+<script src="~/lib/mpegts.js/dist/mpegts.js"></script>
+<div class="text-center">
+    <div class="video-container">
+        <div>
+            <video name="videoElement" class="centeredVideo" controls autoplay>
+                Your browser is too old which doesn't support HTML5 video.
+            </video>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="player_load()">Load</button>
+        <button onclick="player_start()">Start</button>
+        <button onclick="player_pause()">Pause</button>
+        <button onclick="player_destroy()">Destroy</button>
+        <input style="width:100px" type="text" name="seekpoint" />
+        <button onclick="player_seekto()">SeekTo</button>
+    </div>
+
+</div>
+<div>
+    <ul id="playlist">
+    </ul>
+</div>
+@section Scripts
+{
+
+    <script>
+       
+        var player;
+        function player_load(url) {
+            console.log('isSupported: ' + mpegts.isSupported());
+           
+                var mediaDataSource = {
+                    type: 'mse'
+            };
+            mediaDataSource['isLive'] = true;
+            mediaDataSource['liveBufferLatencyChasing'] = true;
+            mediaDataSource['url'] = url;
+                console.log('MediaDataSource', mediaDataSource);
+                player_load_mds(mediaDataSource);
+            
+        }
+
+        function player_load_mds(mediaDataSource) {
+            var element = document.getElementsByName('videoElement')[0];
+            if (typeof player !== "undefined") {
+                if (player != null) {
+                    player.unload();
+                    player.detachMediaElement();
+                    player.destroy();
+                    player = null;
+                }
+            }
+            player = mpegts.createPlayer(mediaDataSource, {
+                enableWorker: true,
+                lazyLoadMaxDuration: 3 * 60,
+                seekType: 'range',
+                liveBufferLatencyChasing: true,
+            });
+            player.attachMediaElement(element);
+            player.load();
+            player.play();
+        }
+
+        function player_start() {
+            player.play();
+        }
+
+        function player_pause() {
+            player.pause();
+        }
+
+        function player_destroy() {
+            player.pause();
+            player.unload();
+            player.detachMediaElement();
+            player.destroy();
+            player = null;
+        }
+
+        function player_seekto() {
+            var input = document.getElementsByName('seekpoint')[0];
+            player.currentTime = parseFloat(input.value);
+        }
+
+       
+        function showVersion() {
+            var version = mpegts.version;
+            document.title = document.title + " (v" + version + ")";
+        }
+
+       
+        document.addEventListener('DOMContentLoaded', function () {
+           
+            showVersion();
+        });
+    </script>
+
+
+    <script>
+        $(function () {
+            $.get("/api/playlist/all").then(function (data) {
+                data.forEach(function (p) {
+                    $("<li>").attr("url", p.url).text(p.name)
+                        .click(function () {
+                            console.log($(this).attr('url'));
+
+                            player_load(new URL(window.location.href).origin+"/api/stream/"+$(this).attr('url').replace(/^rtp:\/\//,""));
+                        })
+                        .appendTo($("#playlist"));
+                });
+            });
+        })
+    </script>
+}
